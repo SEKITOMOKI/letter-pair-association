@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LetterPairAssociation · 魔方盲拧字母对联想词训练器</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">🧩 BlinDuo</div>
+    <div class="chips">
+      <span class="chip" id="roundInfo">第 1 轮</span>
+      <span class="chip" id="masteredInfo">已掌握 0 / 462</span>
+    </div>
+  </header>
+
+  <!-- 主训练卡 -->
+  <section class="card" id="mainCard">
+    <div class="progress">
+      <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+      <div class="progress-text" id="progressInfo">0 / 0</div>
+    </div>
+
+    <div class="pair" id="pair"><span>A</span><span>B</span></div>
+    <div class="hint" id="hint"></div>
+
+    <div class="input-row" id="inputRow">
+      <input id="answerInput" type="text" placeholder="输入联想词，回车提交"
+             autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="btn primary" id="submitBtn">提交</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </section>
+
+  <!-- 本轮完成卡 -->
+  <section class="card" id="completeCard" style="display:none"></section>
+
+  <!-- 词库 -->
+  <details class="card wordlist" id="wordlistPanel">
+    <summary>📖 我的词库 <span class="muted small" id="wordlistCount"></span></summary>
+    <div class="wl-tools">
+      <input id="searchBox" type="text" placeholder="搜索字母组合或联想词" autocomplete="off">
+    </div>
+    <div class="wl-grid" id="wordGrid"></div>
+  </details>
+
+  <footer class="footer">
+    <div class="footer-btns">
+      <button class="btn ghost small" id="exportBtn">导出备份</button>
+      <button class="btn ghost small" id="importBtn">导入备份</button>
+      <button class="btn ghost small" id="resetBtn">重置所有数据</button>
+    </div>
+    <span class="muted small">数据保存在本机浏览器 localStorage 中</span>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

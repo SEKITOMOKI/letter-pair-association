@@ -1,304 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>魔方联想词记忆训练</title>
-<style>
-  * { box-sizing: border-box; }
+/* ============================================================
+ *  LetterPairAssociation · 主逻辑
+ *  魔方盲拧字母对联想词训练器
+ * ============================================================ */
 
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background: #0e1016;
-    background-image: radial-gradient(1000px 500px at 50% -10%, #1b2438 0%, #0e1016 60%);
-    color: #e8eaf0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .app {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 28px 16px 60px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  /* ---------- 顶栏 ---------- */
-  .topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; flex-wrap: wrap;
-  }
-  .brand { font-size: 17px; font-weight: 700; letter-spacing: .5px; }
-  .chips { display: flex; gap: 8px; }
-  .chip {
-    font-size: 12px; padding: 4px 10px; border-radius: 999px;
-    background: #1b2130; border: 1px solid #2a3244; color: #9aa5bd;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ---------- 卡片 ---------- */
-  .card {
-    background: linear-gradient(180deg, #171b26, #14171f);
-    border: 1px solid #262c3a;
-    border-radius: 18px;
-    padding: 24px;
-    box-shadow: 0 12px 30px rgba(0,0,0,.35);
-  }
-
-  /* ---------- 进度 ---------- */
-  .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
-  .progress-bar {
-    flex: 1; height: 6px; border-radius: 999px;
-    background: #232a3a; overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%; width: 0%; border-radius: 999px;
-    background: linear-gradient(90deg, #4a7fe8, #6fb1ff);
-    transition: width .25s ease;
-  }
-  .progress-text {
-    font-size: 12px; color: #8b93a7; font-variant-numeric: tabular-nums;
-    min-width: 62px; text-align: right;
-  }
-
-  /* ---------- 字母对 ---------- */
-  .pair {
-    display: flex; justify-content: center; gap: 10px;
-    font-size: 72px; font-weight: 800; line-height: 1;
-    margin: 4px 0 14px;
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    user-select: none;
-  }
-  .pair span {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 96px; height: 108px;
-    border-radius: 18px;
-    background: #1d2331;
-    border: 1px solid #2d3547;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-    color: #dfe6f5;
-  }
-
-  .hint {
-    text-align: center; color: #7b849a; font-size: 14px;
-    margin-bottom: 20px; min-height: 20px;
-  }
-
-  /* ---------- 输入 ---------- */
-  .input-row { display: flex; gap: 10px; }
-
-  input[type="text"] {
-    flex: 1; min-width: 0;
-    background: #11151e;
-    border: 1px solid #2c3446;
-    border-radius: 12px;
-    padding: 13px 16px;
-    color: #e8eaf0;
-    font-size: 16px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  input[type="text"]::placeholder { color: #5d6579; }
-  input[type="text"]:focus {
-    border-color: #4a7fe8;
-    box-shadow: 0 0 0 3px rgba(74,127,232,.15);
-  }
-
-  /* ---------- 按钮 ---------- */
-  .btn {
-    border: none; border-radius: 12px;
-    padding: 12px 20px;
-    font-size: 15px; font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: transform .08s, filter .15s, background .15s;
-    white-space: nowrap;
-  }
-  .btn:active { transform: translateY(1px); }
-  .btn.primary {
-    background: linear-gradient(180deg, #5a8df0, #3f6fd8);
-    color: #fff;
-  }
-  .btn.primary:hover { filter: brightness(1.08); }
-  .btn.ghost {
-    background: #1e2431; color: #b9c2d6;
-    border: 1px solid #2e3648;
-  }
-  .btn.ghost:hover { background: #252c3c; }
-  .btn.small { padding: 8px 14px; font-size: 13px; }
-
-  /* ---------- 冲突提示 ---------- */
-  .conflict {
-    border: 1px solid #4a3a1e;
-    background: linear-gradient(180deg, rgba(245,166,35,.09), rgba(245,166,35,.02));
-    border-radius: 14px;
-    padding: 16px;
-  }
-  .conflict-title {
-    color: #f0b554; font-weight: 700; font-size: 14px;
-    margin-bottom: 12px;
-  }
-  .compare {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 10px; margin-bottom: 14px;
-  }
-  .cmp {
-    background: #11151e; border: 1px solid #262e3e;
-    border-radius: 12px; padding: 12px 14px;
-    min-width: 0;
-  }
-  .cmp-label { font-size: 11px; color: #7b849a; margin-bottom: 6px; }
-  .cmp-word { font-size: 18px; font-weight: 700; word-break: break-all; }
-  .cmp.old .cmp-word { color: #8fa4c8; }
-  .cmp.new .cmp-word { color: #6fb1ff; }
-  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-  .actions .btn { flex: 1; min-width: 140px; }
-
-  /* ---------- 完成页 ---------- */
-  #completeCard { text-align: center; }
-  .complete-icon { font-size: 52px; margin-bottom: 8px; }
-  #completeCard h2 { margin: 0 0 10px; font-size: 22px; }
-  #completeCard p {
-    color: #9aa5bd; margin: 0 0 22px; line-height: 1.7; font-size: 14px;
-  }
-  #completeCard b { color: #6fb1ff; }
-
-  /* ---------- 词库 ---------- */
-  .wordlist summary {
-    cursor: pointer; font-weight: 600; font-size: 15px;
-    list-style: none; display: flex; align-items: center; gap: 8px;
-    user-select: none;
-  }
-  .wordlist summary::-webkit-details-marker { display: none; }
-  .wordlist summary::after {
-    content: '▾'; margin-left: auto; color: #7b849a;
-    transition: transform .2s;
-  }
-  .wordlist[open] summary::after { transform: rotate(180deg); }
-
-  .wl-tools { margin: 16px 0 12px; display: flex; }
-  .wl-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 8px;
-    max-height: 380px;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
-  .wl-grid::-webkit-scrollbar { width: 6px; }
-  .wl-grid::-webkit-scrollbar-thumb { background: #2c3446; border-radius: 3px; }
-
-  .wl-item {
-    display: flex; align-items: center; gap: 8px;
-    background: #11151e; border: 1px solid #232b3a;
-    border-radius: 10px; padding: 8px 10px;
-    font-size: 13px; min-width: 0;
-  }
-  .wl-item.ok { border-color: #234a33; background: #101a15; }
-  .wl-key {
-    font-weight: 700; color: #7ea6ff; flex-shrink: 0;
-    font-family: ui-monospace, monospace;
-  }
-  .wl-word {
-    color: #c6cee0; overflow: hidden;
-    text-overflow: ellipsis; white-space: nowrap;
-  }
-  .wl-badge { font-size: 11px; color: #4fd18b; margin-left: auto; flex-shrink: 0; }
-  .wl-empty { color: #6d768c; font-size: 13px; padding: 12px 0; }
-
-  /* ---------- 页脚 ---------- */
-  .footer {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; flex-wrap: wrap;
-  }
-  .muted { color: #6d768c; }
-  .small { font-size: 12px; }
-
-  /* ---------- Toast ---------- */
-  .toast {
-    position: fixed; left: 50%; bottom: 36px;
-    transform: translate(-50%, 20px);
-    background: #1f2735; border: 1px solid #33405a;
-    color: #dfe6f5;
-    padding: 11px 22px; border-radius: 999px;
-    font-size: 14px; white-space: nowrap;
-    opacity: 0; pointer-events: none;
-    transition: opacity .2s, transform .2s;
-    box-shadow: 0 8px 24px rgba(0,0,0,.45);
-    z-index: 100;
-    max-width: 90vw; overflow: hidden; text-overflow: ellipsis;
-  }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-  /* ---------- 小屏 ---------- */
-  @media (max-width: 480px) {
-    .app { padding: 20px 12px 48px; }
-    .card { padding: 18px; border-radius: 16px; }
-    .pair { font-size: 50px; gap: 8px; }
-    .pair span { width: 68px; height: 78px; border-radius: 14px; }
-    .compare { grid-template-columns: 1fr; }
-    .input-row { flex-direction: column; }
-    .input-row .btn { width: 100%; }
-  }
-</style>
-</head>
-<body>
-
-<div class="app">
-
-  <header class="topbar">
-    <div class="brand">🧩 魔方联想词训练</div>
-    <div class="chips">
-      <span class="chip" id="roundInfo">第 1 轮</span>
-      <span class="chip" id="masteredInfo">已掌握 0 / 462</span>
-    </div>
-  </header>
-
-  <!-- 主训练卡 -->
-  <section class="card" id="mainCard">
-    <div class="progress">
-      <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
-      <div class="progress-text" id="progressInfo">0 / 0</div>
-    </div>
-
-    <div class="pair" id="pair"><span>A</span><span>B</span></div>
-    <div class="hint" id="hint"></div>
-
-    <div class="input-row" id="inputRow">
-      <input id="answerInput" type="text" placeholder="输入联想词，回车提交"
-             autocomplete="off" autocapitalize="off" spellcheck="false">
-      <button class="btn primary" id="submitBtn">提交</button>
-    </div>
-
-    <div class="feedback" id="feedback"></div>
-  </section>
-
-  <!-- 本轮完成卡 -->
-  <section class="card" id="completeCard" style="display:none"></section>
-
-  <!-- 词库 -->
-  <details class="card wordlist" id="wordlistPanel">
-    <summary>📖 我的词库 <span class="muted small" id="wordlistCount"></span></summary>
-    <div class="wl-tools">
-      <input id="searchBox" type="text" placeholder="搜索字母组合或联想词" autocomplete="off">
-    </div>
-    <div class="wl-grid" id="wordGrid"></div>
-  </details>
-
-  <footer class="footer">
-    <button class="btn ghost small" id="resetBtn">重置所有数据</button>
-    <span class="muted small">数据保存在本机浏览器 localStorage 中</span>
-  </footer>
-
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
 (function () {
   'use strict';
 
@@ -438,7 +142,7 @@
     if (state.queue.length === 0) {
       renderComplete(mc);
     } else {
-      renderQuestion(mc);
+      renderQuestion();
     }
 
     if ($('wordlistPanel').open) renderWordList();
@@ -629,6 +333,84 @@
   }
 
   /* ============================================================
+   *  导出 / 导入备份
+   * ============================================================ */
+  function exportBackup() {
+    let raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { }
+
+    if (!raw) {
+      toast('还没有可导出的数据');
+      return;
+    }
+
+    try { JSON.parse(raw); }
+    catch (e) {
+      toast('本地数据已损坏，无法导出');
+      return;
+    }
+
+    const date = new Date().toISOString().slice(0, 10); // 2025-01-31
+    const blob = new Blob([raw], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `letterpairassociation-backup-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    toast('备份已导出');
+  }
+
+  function importBackup() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+
+    input.onchange = e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        let parsed = null;
+        try {
+          parsed = JSON.parse(reader.result);
+        } catch (err) {
+          toast('文件不是有效的 JSON');
+          return;
+        }
+
+        if (!parsed || typeof parsed !== 'object' || !parsed.entries
+            || typeof parsed.entries !== 'object') {
+          toast('文件格式不正确，导入已取消');
+          return;
+        }
+
+        if (!confirm('导入会覆盖当前所有记录，确定继续吗？')) return;
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        } catch (err) {
+          toast('写入失败，可能是存储空间不足');
+          return;
+        }
+
+        location.reload();
+      };
+
+      reader.onerror = () => toast('读取文件失败');
+      reader.readAsText(file);
+    };
+
+    input.click();
+  }
+
+  /* ============================================================
    *  重置
    * ============================================================ */
   function resetAll() {
@@ -644,7 +426,7 @@
   }
 
   /* ============================================================
-   *  初始化
+   *  事件绑定
    * ============================================================ */
   function bindEvents() {
     $('submitBtn').addEventListener('click', handleSubmit);
@@ -657,21 +439,24 @@
     });
 
     $('resetBtn').addEventListener('click', resetAll);
+    $('exportBtn').addEventListener('click', exportBackup);
+    $('importBtn').addEventListener('click', importBackup);
 
     const panel = $('wordlistPanel');
     panel.addEventListener('toggle', () => { if (panel.open) renderWordList(); });
     $('searchBox').addEventListener('input', renderWordList);
   }
 
+  /* ============================================================
+   *  初始化
+   * ============================================================ */
   function init() {
     state = loadState();
 
     if (!state) {
-      // 全新用户
       state = buildFreshState();
       beginRound(1);
     } else if (state.total === 0 && state.queue.length === 0 && state.round === 1) {
-      // 有存档但从未开始
       beginRound(1);
     }
 
@@ -682,6 +467,3 @@
 
   init();
 })();
-</script>
-</body>
-</html>
